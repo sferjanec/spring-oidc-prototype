@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: oauth-client
+  security:
+    oauth2:
+      client:
+        registration:
+          okta:
+            provider: okta-mock
+            client-id: spring-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile
+        provider:
+          okta-mock:
+            # Pointing to our mock IDP
+            issuer-uri: http://localhost:9000

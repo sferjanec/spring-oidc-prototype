@@ -1,0 +1,10 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: mock-idp
+  security:
+    user:
+      name: user
+      password: password
