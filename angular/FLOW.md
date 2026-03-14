@@ -1,5 +1,4 @@
- -
- `# Detailed OIDC Authentication Flow (BFF Architecture)
+ # Detailed OIDC Authentication Flow (BFF Architecture)
  
 This document outlines the exact step-by-step sequence of events that occur during the OAuth2 Authorization Code flow in this Backend-For-Frontend (BFF) prototype.
 
