@@ -1,5 +1,6 @@
-# Detailed OIDC Authentication Flow (BFF Architecture)
-
+ -
+ `# Detailed OIDC Authentication Flow (BFF Architecture)
+ 
 This document outlines the exact step-by-step sequence of events that occur during the OAuth2 Authorization Code flow in this Backend-For-Frontend (BFF) prototype.
 
 ## Phase 1: Initiation and Proxying
@@ -32,3 +33,16 @@ When debugging similar flows in a work environment, check the following:
 *   **Phase 1:** Does the initial 302 from the BFF have the correct public proxy address in the `redirect_uri` parameter? If not, check proxy headers or `changeOrigin` settings.
 *   **Phase 2:** Does the IDP reject the request? Check the IDP's allowed redirect URIs list to ensure it matches the proxy's public URI.
 *   **Phase 3:** After the IDP redirects back with the `?code=...`, does the UI show a 404? Ensure the frontend proxy is specifically routing the OIDC callback URL to the backend, without swallowing the final application callback.
+
+## 💡 Deep Dive & Common Questions
+
+**Q: I thought the IDP redirects directly back to the Spring app. Why does it go to Angular first?**
+Conceptually, the authorization code *must* get to the Spring app. However, the IDP (like Okta) has no knowledge of your internal network; it only knows the public-facing URL (`http://sso-peanut.localhost:4200`). Therefore, the IDP redirects the user's *browser* there. 
+This is where the BFF proxy shines: The Angular dev server intercepts this specific callback request (e.g., `/login/oauth2/code/okta`) via the proxy rules and forwards it seamlessly to the internal Spring backend (`http://127.0.0.1:8080`).
+
+**Q: Does the IDP issue the ID and Access tokens immediately when the user logs in?**
+No! This is the most critical security feature of the **Authorization Code Flow**. When the user logs in, the IDP only issues a short-lived, single-use **Authorization Code** (the `?code=...` parameter in the URL). Tokens are never sent to the browser where they could be intercepted by malicious scripts (XSS) or browser extensions. 
+Instead, the Spring backend takes that code and makes a secure, backend-to-backend call to the IDP's `/token` endpoint (authenticating itself with its Client Secret) to exchange it for the actual tokens.
+
+**Q: When exactly do we redirect back to the normal Angular app?**
+This is the very last step. After Spring receives the code (Step 10), exchanges it for tokens (Step 11), and creates a secure session (Step 12), its authentication job is done. It then issues one final `302 Redirect` to a "clean" URL meant for the frontend: `http://sso-peanut.localhost:4200/login/callback`. Because this path does *not* match our specific OAuth2 proxy rules, the proxy ignores it, and the Angular router finally takes over to display the UI.
