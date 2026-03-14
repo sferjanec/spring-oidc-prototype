@@ -2,11 +2,13 @@
   "/oauth2": {
     "target": "http://127.0.0.1:8080",
     "secure": false,
-    "changeOrigin": true
+    "changeOrigin": false,
+    "logLevel": "debug"
   },
-  "/login": {
+  "/login/oauth2/**": {
     "target": "http://127.0.0.1:8080",
     "secure": false,
-    "changeOrigin": true
+    "changeOrigin": false,
+    "logLevel": "debug"
   }
 }

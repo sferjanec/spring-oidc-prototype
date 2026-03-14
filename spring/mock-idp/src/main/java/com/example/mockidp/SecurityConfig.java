@@ -64,7 +64,8 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests((authorize) -> authorize
-                .anyRequest().authenticated()
+            .requestMatchers("/.well-known/**", "/favicon.ico", "/error").permitAll()
+            .anyRequest().authenticated()
             )
             .formLogin(Customizer.withDefaults()); // Default form login for user authentication
 
@@ -91,9 +92,8 @@ public class SecurityConfig {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 // The redirect uris allowed for the client backend and frontend
-                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/okta")
-                .redirectUri("http://sso-peanut.localhost:8080/login/oauth2/code/okta")
-                .redirectUri("http://sso-peanut.localhost:4200/login/callback")
+                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/okta") // For direct client testing
+                .redirectUri("http://sso-peanut.localhost:4200/login/oauth2/code/okta") // For proxy testing
                 .postLogoutRedirectUri("http://127.0.0.1:8080/")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
