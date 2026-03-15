@@ -62,3 +62,12 @@ In enterprise environments, this flow is often modified to be completely **state
     3. **Dynamic Redirect:** It retrieves the original frontend `redirect_uri` (saved in the `oauth2_auth_request` cookie in Phase 1) and uses Spring's `RedirectStrategy` to issue the final `302 Found` redirect back to the Angular app. 
     
 The frontend is successfully loaded, and the browser now holds the custom JWT cookie for all future authenticated API calls!
+
+### The Exact Journey of the `oauth2_auth_request` Cookie
+
+1. **Creation (`sso-peanut.localhost`):** The user clicks "Login". The Spring backend generates the `state` (e.g., `WmJZ_Dpeu...`), puts it in an `oauth2_auth_request` cookie, and attaches it to the `302 Redirect` response.
+2. **The Browser Vault:** The browser receives the redirect. Due to the **Same-Origin Policy**, it places that cookie into a secure vault labeled specifically and exclusively for `sso-peanut.localhost`.
+3. **The Trip to the IDP (`localhost:9000`):** The browser navigates to the Mock IDP. It checks its vault for any cookies belonging to `localhost:9000`. It doesn't find the `oauth2_auth_request` cookie (because it's locked to `sso-peanut.localhost`), so it sends the request to the IDP *without* that cookie. (This is good—the IDP never sees your internal app state).
+4. **The Return Journey:** After a successful login, the IDP returns a `302 Redirect` telling the browser to go back to `http://sso-peanut.localhost:4200/login/oauth2/code/okta?code=XYZ&state=WmJZ_Dpeu...`.
+5. **Restoring the State:** The browser prepares to make the request to `sso-peanut.localhost`. It checks its vault, finds the `oauth2_auth_request` cookie sitting exactly where it left it, and automatically attaches it to the request header.
+6. **Validation & Deletion:** The request hits the Spring backend. Spring deserializes the cookie and compares its `state` to the `state` URL parameter the IDP just sent. If they match perfectly, the login response is validated. Spring then deletes the cookie, as its job as "short-term memory" is officially done.
